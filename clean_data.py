@@ -28,3 +28,4 @@ print(df.head(10))
 # print(df.isnull().sum())
 # print(df.duplicated().sum())
 
+print(df.columns)
