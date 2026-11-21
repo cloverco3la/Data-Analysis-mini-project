@@ -1,7 +1,7 @@
 from clean_data import df
 import matplotlib.pyplot as plt
 
-# a. Show sales by category 
+#1. Show sales by category 
 sales_by_category = df.groupby("Category")["Sales"].sum()
 
 plt.bar(sales_by_category.index, sales_by_category.values)
@@ -12,7 +12,7 @@ plt.ylabel("Sales ($)")
 
 plt.show()
 #=========================================================================================
-#b. Total profit by region
+#2. Total profit by region
 
 profit_by_region = df.groupby("Region")["Profit"].sum()
 
@@ -25,7 +25,7 @@ plt.ylabel("Profit ($)")
 plt.show()
 #=========================================================================================
 
-##c. Monthly sales trends 
+#3. Monthly sales trends 
 
 
 df["Month"] = df["Order Date"].dt.month
@@ -54,7 +54,7 @@ axes[0].grid(True, alpha=0.3)
 
 #=========================================================================================
 
-##d. Monthly Order Volume Trend
+#4. Monthly Order Volume Trend
 
 for year in monthly_orders.columns:
 
@@ -73,7 +73,7 @@ axes[1].grid(True, alpha=0.3)
 plt.show()
 
 #=========================================================================================
-##e. Order Processing Lead Time
+#5. Order Processing Lead Time
 
 df["Lead Time"] = (df["Ship Date"] - df["Order Date"]).dt.days
 valid_df = df[df["Lead Time"].notna() & (df["Lead Time"] >= 0)].copy()
@@ -114,7 +114,7 @@ plt.grid(axis="y", alpha=0.3)
 plt.show()
 
 #=========================================================================================
-##f. Shipping Mode Performance
+#6. Shipping Mode Performance
 ship_mode = orders.groupby("Ship Mode").agg(Orders=("Order ID", "nunique"),
                                             Avg_Lead_Time=("Lead Time", "mean"),
                                             Median_Lead_Time=("Lead Time","median"),
@@ -124,3 +124,55 @@ ship_mode["Proportion"] = ship_mode["Orders"]/ship_mode["Orders"].sum()
 
 print(orders.head(20))
 print(ship_mode.head(20))
+
+fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+
+# Chart 1: Number of Orders
+axes[0].bar(ship_mode.index, ship_mode["Orders"])
+axes[0].set_xlabel("Ship Mode")
+axes[0].set_ylabel("Orders")
+axes[0].grid(axis="y")
+
+
+# Chart 2: Average Lead Time
+axes[1].bar(ship_mode.index, ship_mode["Avg_Lead_Time"])
+axes[1].set_xlabel("Ship Mode")
+axes[1].set_ylabel("Avg Lead Time")
+axes[1].grid(axis="y")
+
+plt.tight_layout()
+plt.show()
+
+#=========================================================================================
+#7. Product sales
+
+products = df.groupby(["Product ID","Product Name"]).agg(Orders=("Order ID", "nunique"),
+                                                        Quantity=("Quantity", "sum"),
+                                                        Sales=("Sales","sum")).sort_values("Quantity", ascending=False)
+
+products = products.reset_index()
+print(products)
+
+#=========================================================================================
+#8. Regions demand
+
+regions_demand = df.groupby("Region").agg(Orders=("Order ID", "nunique"),
+                                          Quantity=("Quantity", "sum"),
+                                          Sales=("Sales","sum")).sort_values("Sales", ascending=False)
+regions_demand = regions_demand.reset_index()
+print(regions_demand)
+
+#=========================================================================================
+#9. Regional Demand by Product Category
+regions_demand_category = df.groupby(["Region","Category"]).agg(Quantity=("Quantity", "sum"),
+                                                                Sales=("Sales","sum")).sort_values(["Region","Quantity"], ascending=[True,False]).reset_index()
+
+regions_demand_category_quantity = regions_demand_category.pivot_table(index="Region",
+                                                                            columns="Category",
+                                                                            values="Quantity",
+                                                                            aggfunc="sum",
+                                                                            fill_value=0)
+
+
+#print(regions_demand_category)
+print(regions_demand_category_quantity)
